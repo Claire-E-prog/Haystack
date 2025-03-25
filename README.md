@@ -7,52 +7,180 @@ Open source framework for building LLM applications
 - **Scalability**: Efficiently handles large volumes of data.
 - **Flexibility**: Supports multiple backends and can be easily integrated into existing systems.
 - **Extensibility**: Modular design allows for easy customization and extension.
+## Building blocks: 
 
-## Building blocks: Components -> Pipelines
-Components - pre-built or custom classes for NLP and LLM Application tasks
- - document retrieval, text generation, embeddings etc
+### Components 
+Pre-built (or custom) classes for creating modular or combined (in pipelines) for NLP and LLM tasks
+ - document retrieval, text generation, embeddings etc.
+
+**Example components**
+
+| Component      | Description                                                                                                           | Example Use                                                                                          |
+|----------------|-----------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| Retrievers     | Retrieve relevant documents/text from a vector database (Document Store object in Haystack)                           | [Retrievers API](https://docs.haystack.deepset.ai/reference/retrievers-api)                           |
+| Readers        | Takes a query and a set of documents as input and returns extracted answers from a retrieved document                 | [Readers API](https://docs.haystack.deepset.ai/reference/readers-api)                                 |
+| Generators     | Generate the an LLM response to a prompt.                                                                             | [Generators API](https://docs.haystack.deepset.ai/reference/generators-api)                           |
+| Document Store | Store and manage documents for retrieval and processing by other components.                                          | [Document Store API](https://docs.haystack.deepset.ai/reference/document-store-api)                   |
+
 ### Pipelines
-Pipelines define the flow of data through a series and/or branched components to perform specific tasks.
+Directed graphs of Haystack components and integrations
+- preprocessing, indexing, querying etc.
+<img src="https://github.com/user-attachments/assets/c9b046a9-3dc1-409f-a0b8-532ff7def1d2" alt="Screenshot 2025-03-25 at 7 46 09 AM" width="400" />
+
+### Common types of pipelines include:
 - **Extractive Question Answering**: Combines a retriever and a reader to find answers in documents.
 - **Document Search**: Uses a retriever to search for relevant documents.
 - **Generative Question Answering**: Uses a generative model to create answers from documents.
 
-### Common components for RAG applications
-| Component  | Description                                                                                                                                  | Example Use                                                                                          |
-|------------|----------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| Retrievers | Retrieve relevant documents/text from a vector database (Document Store object in Haystack)                                                  | [Retrievers API](https://docs.haystack.deepset.ai/reference/retrievers-api)                           |
-| Readers    | Takes a query and a set of documents as input and returns Extracted Answers by selecting a span of text within a document                    | [Readers API](https://docs.haystack.deepset.ai/reference/readers-api)                                 |
-| Generators | Generate the text LLM response to a prompt.                                                                                                   | [Generators API](https://docs.haystack.deepset.ai/reference/generators-api)                           |
-### Document Store object
+### Document Stores
+Pre-built/custom component to facilitate storing snd retrieving documents that can be indexed and searched. Supports most vector databases and vector compatible databases (PostgreSQL)
+![image](https://github.com/user-attachments/assets/de0a2a72-cef0-4982-9a0d-429c75c097a8)
 
-### Retrievers
+# Methods for indexing and retrieving job-related data 
+Using pipelines for indexing and retriving job data:
+Indexing Pipeline:
 
-Retrievers are responsible for fetching relevant documents from the Document Store based on a query. Types of retrievers include:
-- **Sparse Retrievers**: Use traditional keyword-based methods (e.g., BM25).
-- **Dense Retrievers**: Use embeddings to find semantically similar documents (e.g., EmbeddingRetriever).
+[PreProcessors](https://docs.haystack.deepset.ai/docs/preprocessors) - component with methods to clean, normalize and chunk text documents 
 
-### Readers
+[Document Embedders](https://docs.haystack.deepset.ai/docs/choosing-the-right-embedder) - component to embed Document objects
 
-Readers extract answers from the documents retrieved by the retriever. They are typically used in question answering pipelines and can be based on models like BERT.
+[Document Writers](https://docs.haystack.deepset.ai/docs/documentwriter) - write document object to document store
 
-### Pipelines
+[Document Stores](https://docs.haystack.deepset.ai/reference/document-stores-api) - store documents and embeddings for retrival
 
-Pipelines define the flow of data through various components to perform specific tasks. Common types of pipelines include:
-- **Extractive Question Answering**: Combines a retriever and a reader to find answers in documents.
-- **Document Search**: Uses a retriever to search for relevant documents.
-- **Generative Question Answering**: Uses a generative model to create answers from documents.
+Retrieving Pipeline:
+Text Embedder - component to embed query
+Retriever - component to search document embeddings and assigns relevance scores based on query (keyword and embedding based)
+**Dependencies**
+```python
+from haystack import Document, Pipeline
+from haystack.document_stores.in_memory import InMemoryDocumentStore
+from haystack.components.embedders import SentenceTransformersTextEmbedder
+from haystack.components.retrievers.in_memory import InMemoryEmbeddingRetriever
+```
+**Components**
+```python
+document_store = InMemoryDocumentStore(embedding_similarity_function="cosine")
+text_embedder = SentenceTransformersTextEmbedder()
+retriever = InMemoryEmbeddingRetriever(document_store=document_store)
+```
+**Pipeline**
+```python
+query_pipeline = Pipeline()
+```
+**Add components**
+```python
+query_pipeline.add_component("component_name", component_type)
 
-## Example Pipelines
+# Here is an example of how you'd add the components initialized in step 2 above:
+query_pipeline.add_component("text_embedder", text_embedder)
+query_pipeline.add_component("retriever", retriever)
 
-### Extractive QA Pipeline
+# You could also add components without initializing them before:
+query_pipeline.add_component("text_embedder", SentenceTransformersTextEmbedder())
+query_pipeline.add_component("retriever", InMemoryEmbeddingRetriever(document_store=document_store))
+```
+**Connect components**
+```python
+# Syntax
+# This is the syntax to connect components. Here you're connecting output1 of component1 to input1 of component2:
+pipeline.connect("component1.output1", "component2.input1")
 
-1. **Retriever**: Fetches relevant documents from the Document Store.
-2. **Reader**: Extracts precise answers from the retrieved documents.
+# If both components have only one output and input, you can just pass their names:
+pipeline.connect("component1", "component2")
 
-### Document Search Pipeline
+# If one of the components has only one output but the other has multiple inputs,
+# you can pass just the name of the component with a single output, but for the component with
+# multiple inputs, you must specify which input you want to connect
 
-1. **Retriever**: Searches for documents based on the query.
+# Here, component1 has only one output, but component2 has mulitiple inputs:
+pipeline.connect("component1", "component2.input1")
 
-### Custom Pipelines
+# And here's how it should look like for the semantic document search pipeline we're using as an example:
+pipeline.connect("text_embedder.embedding", "retriever.query_embedding")
+# Because the InMemoryEmbeddingRetriever only has one input, this is also correct:
+pipeline.connect("text_embedder.embedding", "retriever")
+# Example:
+# Imagine this pipeline has four components: text_embedder, retriever, prompt_builder and llm.
+# Here's how you would connect them into a pipeline:
 
-Haystack allows the creation of custom pipelines by combining various components to fit specific use cases.
+query_pipeline.connect("text_embedder.embedding", "retriever")
+query_pipeline.connect("retriever","prompt_builder.documents")
+query_pipeline.connect("prompt_builder", "llm")
+```
+**Other components for RAG chatbot:**
+[ExtractiveReader](https://docs.haystack.deepset.ai/docs/extractivereader) - component for extractive Pipelines used alone or in conjunction with a retriever to extract (top_k) answers from relevant Document
+[Generator](https://docs.haystack.deepset.ai/docs/choosing-the-right-generator) - component that acts as the main interface with a user to provide a natural language response to a prompt
+
+# Handling embeddings and vector search in PostgreSQL
+
+**pgvector and Pgvector-haystack**
+
+Using PostgreSQL with Pgvector extension enables vector search in postgreSQL. Haystack supports Pgvector for PostgreSQL integration via [Pgvector-haystack](https://docs.haystack.deepset.ai/reference/integrations-pgvector) and Document Store
+Supported Retrievers:
+[PgvectorEmbeddingRetriever](https://docs.haystack.deepset.ai/docs/pgvectorembeddingretriever)
+[PgvectorEmbeddingRetriever](https://docs.haystack.deepset.ai/docs/pgvectorembeddingretriever)
+
+## Setting up a document store and retriever with pgvector-haystack
+
+```python
+from haystack_integrations.document_stores.pgvector import PgvectorDocumentStore
+from haystack import Document
+
+document_store = PgvectorDocumentStore(
+    embedding_dimension=768,
+    vector_function="cosine_similarity",
+    recreate_table=True,
+    search_strategy="hnsw",
+)
+
+document_store.write_documents([
+    Document(content="This is first", embedding=[0.1]*768),
+    Document(content="This is second", embedding=[0.3]*768)
+    ])
+print(document_store.count_documents())
+```
+# How to use generative models effectively with job data
+
+Depends on what questions we want the chatbot to answer…
+
+## (Assuming) Trend Related Questions
+
+**User**: *"What new AI roles have emerged in the past year?"*  
+**Chatbot**: *"Emerging AI roles are 'AI Prompt Engineer', 'LLM Developer', and 'AI Ethics Specialist' with demand for AI Prompt Engineers increasing 150% from previous years."*
+
+## Traditional RAG (Retrieve and Generate)
+
+1. Generate document/s summarizing insights derived from job posting data analysis (monthly).
+2. Store summaries in a vector store.
+3. Build an index/retrieval pipeline using summaries.
+4. Chatbot uses retrieved documents to answer job market questions.
+
+## Text to SQL Chatbot
+
+1. Create a custom SQL query component that generates SQL queries based on natural language user input.
+2. Query tabular jobs data (skills, titles, month).
+3. Chatbot summarizes query results.
+
+[Extractive QA Pipeline] (https://colab.research.google.com/github/deepset-ai/haystack-tutorials/blob/main/tutorials/34_Extractive_QA_Pipeline.ipynb)
+[SQL Chat](https://colab.research.google.com/github/deepset-ai/haystack-cookbook/blob/main/notebooks/chat_with_SQL_3_ways.ipynb#scrollTo=GGLuOzn9IPqd)
+
+Still to look at:
+<span style="color: red;">Differences between Haystack and LangChain.</span>
+
+<span style="color: red;">Best practices for normalizing skills and job titles.</span>
+
+<span style="color: red;">Techniques for optimizing search relevance in job postings.</span>
+
+<span style="color: red;">Compatibility of Haystack with airflow</span>
+
+<span style="color: red;">Techniques for optimizing search relevance in job postings.</span>
+
+<span style="color: red;">How haystack can be used to automate retrieval and parsing workflows.</span>
+
+Advantages and Limitations of Haystack for this project
+
+Performance considerations and ease of use compared to LangChain
+
+
+
