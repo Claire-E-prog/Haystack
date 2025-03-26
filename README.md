@@ -27,30 +27,18 @@ Directed graphs of Haystack components and integrations
 - preprocessing, indexing, querying etc.
 <img src="https://github.com/user-attachments/assets/c9b046a9-3dc1-409f-a0b8-532ff7def1d2" alt="Screenshot 2025-03-25 at 7 46 09 AM" width="400" />
 
-### Common types of pipelines include:
-- **Extractive Question Answering**: Combines a retriever and a reader to find answers in documents.
-- **Document Search**: Uses a retriever to search for relevant documents.
-- **Generative Question Answering**: Uses a generative model to create answers from documents.
-
 ### Document Stores
-Pre-built/custom component to facilitate storing snd retrieving documents that can be indexed and searched. Supports most vector databases and vector compatible databases (PostgreSQL)
+Pre-built/custom component to facilitate storing snd retrieving Document objects that can be indexed and searched. Supports most vector databases and vector compatible databases (PostgreSQL)
 ![image](https://github.com/user-attachments/assets/de0a2a72-cef0-4982-9a0d-429c75c097a8)
 
 # Methods for indexing and retrieving job-related data 
-Using pipelines for indexing and retriving job data:
-Indexing Pipeline:
 
-[PreProcessors](https://docs.haystack.deepset.ai/docs/preprocessors) - component with methods to clean, normalize and chunk text documents 
+### Pipeline Templates:
+  ![image](https://github.com/user-attachments/assets/5f0b85e5-1976-4272-934e-66b9c102e05d)
+  ![Screenshot 2025-03-26 at 2 36 26 PM](https://github.com/user-attachments/assets/5aad4dc6-94cf-4b24-b989-a6fbb3783f21)
+  ![Screenshot 2025-03-26 at 2 37 17 PM](https://github.com/user-attachments/assets/ad4536ea-0b24-4a58-aabb-43d14d8a6bac)
 
-[Document Embedders](https://docs.haystack.deepset.ai/docs/choosing-the-right-embedder) - component to embed Document objects
-
-[Document Writers](https://docs.haystack.deepset.ai/docs/documentwriter) - write document object to document store
-
-[Document Stores](https://docs.haystack.deepset.ai/reference/document-stores-api) - store documents and embeddings for retrival
-
-Retrieving Pipeline:
-Text Embedder - component to embed query
-Retriever - component to search document embeddings and assigns relevance scores based on query (keyword and embedding based)
+### Build Pipeline (No template):
 **Dependencies**
 ```python
 from haystack import Document, Pipeline
@@ -75,10 +63,6 @@ query_pipeline.add_component("component_name", component_type)
 # Here is an example of how you'd add the components initialized in step 2 above:
 query_pipeline.add_component("text_embedder", text_embedder)
 query_pipeline.add_component("retriever", retriever)
-
-# You could also add components without initializing them before:
-query_pipeline.add_component("text_embedder", SentenceTransformersTextEmbedder())
-query_pipeline.add_component("retriever", InMemoryEmbeddingRetriever(document_store=document_store))
 ```
 **Connect components**
 ```python
@@ -108,18 +92,15 @@ query_pipeline.connect("text_embedder.embedding", "retriever")
 query_pipeline.connect("retriever","prompt_builder.documents")
 query_pipeline.connect("prompt_builder", "llm")
 ```
-**Other components for RAG chatbot:**
-[ExtractiveReader](https://docs.haystack.deepset.ai/docs/extractivereader) - component for extractive Pipelines used alone or in conjunction with a retriever to extract (top_k) answers from relevant Document
-[Generator](https://docs.haystack.deepset.ai/docs/choosing-the-right-generator) - component that acts as the main interface with a user to provide a natural language response to a prompt
-
 # Handling embeddings and vector search in PostgreSQL
 
 **pgvector and Pgvector-haystack**
 
 Using PostgreSQL with Pgvector extension enables vector search in postgreSQL. Haystack supports Pgvector for PostgreSQL integration via [Pgvector-haystack](https://docs.haystack.deepset.ai/reference/integrations-pgvector) and Document Store
-Supported Retrievers:
+
+**Supported Retrievers:**
 [PgvectorEmbeddingRetriever](https://docs.haystack.deepset.ai/docs/pgvectorembeddingretriever)
-[PgvectorEmbeddingRetriever](https://docs.haystack.deepset.ai/docs/pgvectorembeddingretriever)
+[PgvectorKeywordRetriever](https://docs.haystack.deepset.ai/docs/pgvectorembeddingretriever)
 
 ## Setting up a document store and retriever with pgvector-haystack
 
@@ -130,8 +111,8 @@ from haystack import Document
 document_store = PgvectorDocumentStore(
     embedding_dimension=768,
     vector_function="cosine_similarity",
-    recreate_table=True,
-    search_strategy="hnsw",
+    recreate_table=True, # overwrites existing table
+    search_strategy="hnsw", # approximate nearest neighbor search strategy
 )
 
 document_store.write_documents([
@@ -156,31 +137,26 @@ Depends on what questions we want the chatbot to answer…
 3. Build an index/retrieval pipeline using summaries.
 4. Chatbot uses retrieved documents to answer job market questions.
 
+**Example**
+[Extractive QA Pipeline] (https://colab.research.google.com/github/deepset-ai/haystack-tutorials/blob/main/tutorials/34_Extractive_QA_Pipeline.ipynb)
+
 ## Text to SQL Chatbot
 
 1. Create a custom SQL query component that generates SQL queries based on natural language user input.
 2. Query tabular jobs data (skills, titles, month).
 3. Chatbot summarizes query results.
 
-[Extractive QA Pipeline] (https://colab.research.google.com/github/deepset-ai/haystack-tutorials/blob/main/tutorials/34_Extractive_QA_Pipeline.ipynb)
+**Example**
 [SQL Chat](https://colab.research.google.com/github/deepset-ai/haystack-cookbook/blob/main/notebooks/chat_with_SQL_3_ways.ipynb#scrollTo=GGLuOzn9IPqd)
 
-Still to look at:
-<span style="color: red;">Differences between Haystack and LangChain.</span>
+# Compatibility of Haystack with airflow/How haystack can be used to automate retrieval and parsing workflows
+# Differences between Haystack and LangChain/Performance considerations and ease of use compared to LangChain/Advantages and Limitations of Haystack for this project
+# Job Data
+1. **Best practices for normalizing skills and job titles**
+2. **Techniques for optimizing search relevance in job postings**
+  
 
-<span style="color: red;">Best practices for normalizing skills and job titles.</span>
 
-<span style="color: red;">Techniques for optimizing search relevance in job postings.</span>
-
-<span style="color: red;">Compatibility of Haystack with airflow</span>
-
-<span style="color: red;">Techniques for optimizing search relevance in job postings.</span>
-
-<span style="color: red;">How haystack can be used to automate retrieval and parsing workflows.</span>
-
-Advantages and Limitations of Haystack for this project
-
-Performance considerations and ease of use compared to LangChain
 
 
 
