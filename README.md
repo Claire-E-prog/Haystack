@@ -3,16 +3,18 @@
 ![Screenshot 2025-03-24 at 5 15 52 PM](https://github.com/user-attachments/assets/825f642d-5547-405f-a222-10b9461794ab)
 ## Overview and Architecture
 Open source framework for building LLM applications
-### Key Features
-- **Scalability**: Efficiently handles large volumes of data.
-- **Flexibility**: Supports multiple backends and can be easily integrated into existing systems.
-- **Extensibility**: Modular design allows for easy customization and extension.
+
 ## Building blocks: 
 
 ### Components 
-Pre-built (or custom) classes for creating modular or combined (in pipelines) for NLP and LLM tasks
- - document retrieval, text generation, embeddings etc.
-
+Pre-built (or custom) classes (modular or combined in pipelines) for NLP and LLM tasks
+ * Data processing
+ * Embedding
+ * Writing
+ * Retrieval
+ * Ranking
+ * LLM Generation
+   
 **Example components**
 
 | Component      | Description                                                                                                           | Example Use                                                                                          |
@@ -133,12 +135,12 @@ Depends on what questions we want the chatbot to answer…
 ## Traditional RAG (Retrieve and Generate)
 
 1. Generate document/s summarizing insights derived from job posting data analysis (monthly).
-2. Store summaries in a vector store.
-3. Build an index/retrieval pipeline using summaries.
-4. Chatbot uses retrieved documents to answer job market questions.
+2. Build an index/retrieval pipeline using summaries.
+3. Chatbot uses retrieved documents to answer job market questions.
 
 **Example**
-[Extractive QA Pipeline] (https://colab.research.google.com/github/deepset-ai/haystack-tutorials/blob/main/tutorials/34_Extractive_QA_Pipeline.ipynb)
+
+[Extractive QA Pipeline](https://colab.research.google.com/github/deepset-ai/haystack-tutorials/blob/main/tutorials/34_Extractive_QA_Pipeline.ipynb)
 
 ## Text to SQL Chatbot
 
@@ -147,13 +149,38 @@ Depends on what questions we want the chatbot to answer…
 3. Chatbot summarizes query results.
 
 **Example**
+
 [SQL Chat](https://colab.research.google.com/github/deepset-ai/haystack-cookbook/blob/main/notebooks/chat_with_SQL_3_ways.ipynb#scrollTo=GGLuOzn9IPqd)
 
-# Compatibility of Haystack with airflow/How haystack can be used to automate retrieval and parsing workflows
 # Differences between Haystack and LangChain/Performance considerations and ease of use compared to LangChain/Advantages and Limitations of Haystack for this project
+**Initial thoughts (without having actually built anything with Haystack yet):**
+* Haystack modular components similar to Langchain
+* Haystack may be easier to work with - the documentation is simpler and more accessible
+* Haystack may be more flexible/simpler to integrate with existing workflows and processes
+
+**TODO:**
+* experiment with building/deploying haystack app
+* Identify limitations of Haystack
+    
+# Compatibility of Haystack with airflow/How haystack can be used to automate retrieval and parsing workflows
+* Might be possible to define custom DAG to call haystack components
+* Haystack and airflow work in Docker
+* Airflow supports pgvector
+## Potential workflow:
+Airflow DAG: 
+1. Fetches data
+2. preprocess to a haystack document store (pgvector)
+   
+**TODO:**
+* Explore Airflow workflows and integration with haystack
+* Performance considerations (difficult to assess with limited knowledge of current processes)
+
+    
 # Job Data
-1. **Best practices for normalizing skills and job titles**
-2. **Techniques for optimizing search relevance in job postings**
+
+**TODO**
+* Best practices for normalizing skills and job titles
+* Techniques for optimizing search relevance in job postings
   
 
 
